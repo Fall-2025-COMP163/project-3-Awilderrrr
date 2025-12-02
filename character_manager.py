@@ -96,4 +96,4 @@ def gain_experience(character, amount):
     if amount < 0:
         raise CharacterError("Experience amount cannot be negative.")
 
-    xp = character.get("experience"
+    xp = character.get("experience")
