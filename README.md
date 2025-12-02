@@ -58,4 +58,4 @@ enemies, and save/load your game.
 
 ## AI Usage
 
-AI helped me understand my errors in my code. It helped me debug certain issues in my code that I didn't understand. AI also helped me with organizing my files. 
+AI helped me understand my errors in my code. It helped me debug certain issues in my code that I didn't understand. AI also helped me with organizing my files..
