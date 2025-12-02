@@ -8,109 +8,193 @@ from custom_exceptions import (
 
 def load_quests(path="data/quests.txt"):
     """
-    Load quests from a file.
+    Load quests from a block-structured quest file.
 
-    Expected line format (non-empty, not starting with '#'):
-        quest_id|title|description|reward_xp|reward_gold|required_level|prerequisite
+    Expected format:
 
-    Returns:
-        dict mapping quest_id -> quest_dict
+        QUEST_ID: first_steps
+        TITLE: First Steps
+        DESCRIPTION: Begin your adventure...
+        REWARD_XP: 50
+        REWARD_GOLD: 25
+        REQUIRED_LEVEL: 1
+        PREREQUISITE: NONE
 
-    Raises:
-        MissingDataFileError, InvalidDataFormatError
+        QUEST_ID: next_quest
+        ...
+
+    Behavior:
+      - Reads quests in blocks separated by blank lines
+      - Skips incomplete blocks instead of crashing
+      - Raises InvalidDataFormatError ONLY if no valid quests were found
     """
+
     if not os.path.exists(path):
         raise MissingDataFileError("Quest file not found: " + path)
 
     quests = {}
+    current = {}
+
+    # Helper: add processed quest if valid
+    def commit_current(line_num):
+        if not current:
+            return
+        required_fields = [
+            "QUEST_ID",
+            "TITLE",
+            "DESCRIPTION",
+            "REWARD_XP",
+            "REWARD_GOLD",
+            "REQUIRED_LEVEL",
+            "PREREQUISITE",
+        ]
+
+        # Must contain all fields
+        if all(k in current for k in required_fields):
+            try:
+                qid = current["QUEST_ID"]
+                quests[qid] = {
+                    "quest_id": qid,
+                    "title": current["TITLE"],
+                    "description": current["DESCRIPTION"],
+                    "reward_xp": int(current["REWARD_XP"]),
+                    "reward_gold": int(current["REWARD_GOLD"]),
+                    "required_level": int(current["REQUIRED_LEVEL"]),
+                    "prerequisite": current["PREREQUISITE"],
+                }
+            except ValueError:
+                # numeric conversion failed → skip
+                pass
+
+        # Reset for next block
+        current.clear()
+
     try:
         with open(path, "r") as f:
-            for line_num, line in enumerate(f, start=1):
-                line = line.strip()
-                if not line or line.startswith("#"):
+            for line_num, raw in enumerate(f, start=1):
+                line = raw.strip()
+
+                # Blank line = end of block
+                if line == "":
+                    commit_current(line_num)
                     continue
 
-                parts = line.split("|")
-                if len(parts) != 7:
-                    raise InvalidDataFormatError(
-                        "Invalid quest format on line " + str(line_num)
-                    )
+                if ":" not in line:
+                    # Not a valid key-value line, skip
+                    continue
 
-                quest_id, title, desc, xp_str, gold_str, lvl_str, prereq = parts
-                try:
-                    reward_xp = int(xp_str)
-                    reward_gold = int(gold_str)
-                    required_level = int(lvl_str)
-                except ValueError:
-                    raise InvalidDataFormatError(
-                        "Non-numeric quest values on line " + str(line_num)
-                    )
+                key, value = line.split(":", 1)
+                key = key.strip().upper()
+                value = value.strip()
 
-                quest = {
-                    "quest_id": quest_id,
-                    "title": title,
-                    "description": desc,
-                    "reward_xp": reward_xp,
-                    "reward_gold": reward_gold,
-                    "required_level": required_level,
-                    "prerequisite": prereq,
-                }
-                quests[quest_id] = quest
+                current[key] = value
+
+            # End of file → commit last block
+            commit_current(line_num)
+
     except OSError:
         raise DataError("Error reading quest file: " + path)
+
+    if not quests:
+        raise InvalidDataFormatError(
+            "No valid quest entries found in: " + path
+        )
 
     return quests
 
 
+
 def load_items(path="data/items.txt"):
     """
-    Load items from a file.
+    Load items from a block-structured item file.
 
-    Expected line format:
-        item_id,name,type,effect,cost,description
+    Expected format (one item per block, separated by blank lines):
 
-    Returns:
-        dict mapping item_id -> item_dict
+        ITEM_ID: health_potion
+        NAME: Health Potion
+        TYPE: consumable
+        EFFECT: health:20
+        COST: 25
+        DESCRIPTION: A basic healing potion.
 
-    Raises:
-        MissingDataFileError, InvalidDataFormatError
+        ITEM_ID: iron_sword
+        NAME: Iron Sword
+        TYPE: weapon
+        EFFECT: strength:5
+        COST: 50
+        DESCRIPTION: A sturdy iron sword.
+
+    Behavior:
+      - Reads items in blocks separated by blank lines
+      - Skips incomplete/invalid blocks instead of crashing
+      - Raises InvalidDataFormatError ONLY if no valid items were found
     """
+
     if not os.path.exists(path):
         raise MissingDataFileError("Item file not found: " + path)
 
     items = {}
+    current = {}
+
+    def commit_current(line_num):
+        """Validate and store current item block if valid, then reset."""
+        if not current:
+            return
+
+        required_fields = [
+            "ITEM_ID",
+            "NAME",
+            "TYPE",
+            "EFFECT",
+            "COST",
+            "DESCRIPTION",
+        ]
+
+        if all(k in current for k in required_fields):
+            try:
+                item_id = current["ITEM_ID"]
+                items[item_id] = {
+                    "item_id": item_id,
+                    "name": current["NAME"],
+                    "type": current["TYPE"],
+                    "effect": current["EFFECT"],
+                    "cost": int(current["COST"]),
+                    "description": current["DESCRIPTION"],
+                }
+            except ValueError:
+                # bad COST value → skip this block
+                pass
+
+        current.clear()
+
     try:
         with open(path, "r") as f:
-            for line_num, line in enumerate(f, start=1):
-                line = line.strip()
-                if not line or line.startswith("#"):
+            for line_num, raw in enumerate(f, start=1):
+                line = raw.strip()
+
+                # Blank line → end of an item block
+                if line == "":
+                    commit_current(line_num)
                     continue
 
-                parts = line.split(",")
-                if len(parts) != 6:
-                    raise InvalidDataFormatError(
-                        "Invalid item format on line " + str(line_num)
-                    )
+                # Expect KEY: VALUE lines
+                if ":" not in line:
+                    # Ignore malformed lines silently
+                    continue
 
-                item_id, name, item_type, effect, cost_str, desc = parts
-                try:
-                    cost = int(cost_str)
-                except ValueError:
-                    raise InvalidDataFormatError(
-                        "Non-numeric item cost on line " + str(line_num)
-                    )
+                key, value = line.split(":", 1)
+                key = key.strip().upper()
+                value = value.strip()
+                current[key] = value
 
-                item = {
-                    "item_id": item_id,
-                    "name": name,
-                    "type": item_type,
-                    "effect": effect,
-                    "cost": cost,
-                    "description": desc,
-                }
-                items[item_id] = item
+            # End of file: commit last block
+            commit_current(line_num)
+
     except OSError:
         raise DataError("Error reading item file: " + path)
+
+    if not items:
+        raise InvalidDataFormatError("No valid item data found in: " + path)
 
     return items
 

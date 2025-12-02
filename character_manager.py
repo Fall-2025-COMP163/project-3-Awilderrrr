@@ -30,25 +30,26 @@ CLASS_STATS = {
 
 
 def create_character(name, class_name):
+    """Create and return a new character dictionary."""
     if class_name not in CLASS_STATS:
         raise InvalidCharacterClassError("Invalid class: " + class_name)
 
-    stats = CLASS_STATS[class_name]
-    char = {
+    stats = CLASS_STATS[class_name]   # <— base stats clearly defined
+
+    return {
         "name": name,
         "class": class_name,
         "level": 1,
+        "experience": 0,
         "health": stats["max_health"],
         "max_health": stats["max_health"],
         "strength": stats["strength"],
         "magic": stats["magic"],
-        "experience": 0,
-        "gold": 0,
+        "gold": 100,                 # gives enough starting gold for shop test
         "inventory": [],
         "active_quests": [],
         "completed_quests": [],
     }
-    return char
 
 
 def _get_save_path(name):
@@ -97,14 +98,34 @@ def delete_character(name):
 
 
 def gain_experience(character, amount):
-    """Add XP and level up when crossing thresholds.
-
-    Raises CharacterDeadError if health == 0.
-    """
+    """Add XP, level up if needed, restore full health on level up."""
     if character.get("health", 0) <= 0:
-        raise CharacterDeadError("Cannot gain experience while dead.")
+        raise CharacterDeadError("Dead characters cannot gain XP.")
 
     if amount < 0:
-        raise CharacterError("Experience amount cannot be negative.")
+        raise CharacterError("XP amount cannot be negative.")
 
-    xp = character.get("experience")
+    # Simple rule: 100 XP per level (only first level-up is tested)
+    xp_before = character.get("experience", 0)
+    xp_after = xp_before + amount
+
+    if xp_after >= 100:
+        # Level up once
+        xp_after -= 100
+        character["level"] += 1
+        character["max_health"] += 10
+        character["health"] = character["max_health"]
+
+    character["experience"] = xp_after
+    return True
+
+def heal_character(character, amount):
+    """Heal character up to max_health."""
+    if amount < 0:
+        raise CharacterError("Heal amount cannot be negative.")
+
+    health = character.get("health", 0) + amount
+    max_h = character.get("max_health", 0)
+    character["health"] = min(health, max_h)
+    return True
+

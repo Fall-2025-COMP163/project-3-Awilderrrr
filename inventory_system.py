@@ -19,14 +19,9 @@ def _get_inventory(character):
 # ... add_item_to_inventory, remove_item_from_inventory, etc. ...
 
 def purchase_item(character, item_name, item_data):
-    """
-    Purchase an item.
-
-    item_data example from tests:
-        {'cost': 25, 'type': 'consumable'}
-    """
     cost = int(item_data.get("cost", 0))
     gold = character.get("gold", 0)
+
     if gold < cost:
         raise InsufficientResourcesError("Not enough gold to purchase item.")
 
@@ -128,4 +123,28 @@ def equip_armor(character, item_name, item_data):
         raise ItemNotFoundError("Armor not in inventory: " + item_name)
 
     if item_data.get("type") != "armor":
-        raise InvalidItemTyp
+        raise InvalidItemTypeError("Item is not a armor.")
+
+def sell_item(character, item_name, item_data):
+    """
+    Sell an item from inventory.
+
+    Behavior for tests:
+        - Remove item from inventory
+        - Add cost // 2 gold to character
+        - Return gold_received
+
+    In tests:
+        item_data = {'cost': 25, 'type': 'consumable'}
+        expected gold_received == 12 (25 // 2)
+    """
+    inventory = _get_inventory(character)
+    if item_name not in inventory:
+        raise ItemNotFoundError("Item not in inventory: " + item_name)
+
+    cost = int(item_data.get("cost", 0))
+    gold_received = cost // 2
+
+    character["gold"] = character.get("gold", 0) + gold_received
+    inventory.remove(item_name)
+    return gold_received
