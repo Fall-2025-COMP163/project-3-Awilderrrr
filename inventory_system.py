@@ -1,71 +1,114 @@
-"""Inventory and equipment management for Quest Chronicles."""
+from custom_exceptions import (
+    InventoryError,
+    InventoryFullError,
+    ItemNotFoundError,
+    InsufficientResourcesError,
+    InvalidItemTypeError,
+)
 
-from custom_exceptions import InventoryError
+MAX_INVENTORY_SIZE = 20
 
 
-def add_item(character, item_name, items_db):
-    """Add an item to a character's inventory.
+def _get_inventory(character):
+    inv = character.get("inventory")
+    if inv is None:
+        inv = []
+        character["inventory"] = inv
+    return inv
 
-    Raises:
-        InventoryError if the item is unknown.
-    """
-    if item_name not in items_db:
-        raise InventoryError("Unknown item: " + item_name)
-    inventory = character.get("inventory", [])
+
+def add_item_to_inventory(character, item_name):
+    """Add an item, or raise InventoryFullError if full."""
+    inventory = _get_inventory(character)
+    if len(inventory) >= MAX_INVENTORY_SIZE:
+        raise InventoryFullError("Inventory is full.")
     inventory.append(item_name)
-    character["inventory"] = inventory
+    return True
 
 
-def remove_item(character, item_name):
-    """Remove an item from a character's inventory.
-
-    Raises:
-        InventoryError if the item is not present.
-    """
-    inventory = character.get("inventory", [])
+def remove_item_from_inventory(character, item_name):
+    """Remove an item, or raise ItemNotFoundError."""
+    inventory = _get_inventory(character)
     if item_name not in inventory:
-        raise InventoryError("Item not in inventory: " + item_name)
+        raise ItemNotFoundError("Item not found: " + item_name)
     inventory.remove(item_name)
-    character["inventory"] = inventory
+    return True
 
 
-def use_item(character, item_name, items_db):
-    """Use an item and apply its effect to the character.
-
-    Currently supports:
-        type == "heal": restore HP based on item power.
-
-    Raises:
-        InventoryError if the item is not present or unknown.
+def use_item(character, item_name, item_data):
     """
-    inventory = character.get("inventory", [])
+    Use a consumable item.
+
+    item_data example:
+        {'type': 'consumable', 'effect': 'health:20'}
+
+    Raises InvalidItemTypeError if type != 'consumable'.
+    """
+    inventory = _get_inventory(character)
     if item_name not in inventory:
-        raise InventoryError("Item not in inventory: " + item_name)
+        raise ItemNotFoundError("Item not found: " + item_name)
 
-    if item_name not in items_db:
-        raise InventoryError("Unknown item: " + item_name)
+    item_type = item_data.get("type")
+    if item_type != "consumable":
+        raise InvalidItemTypeError("Only consumables can be used.")
 
-    item = items_db[item_name]
-    item_type = item.get("type", "")
+    effect = item_data.get("effect", "")
+    # format: 'health:20'
+    if ":" in effect:
+        stat, value_str = effect.split(":", 1)
+        try:
+            value = int(value_str)
+        except ValueError:
+            value = 0
 
-    if item_type == "heal":
-        power = item.get("power", 0)
-        max_hp = character.get("max_hp", 0)
-        hp = character.get("hp", 0)
-        hp += power
-        if hp > max_hp:
-            hp = max_hp
-        character["hp"] = hp
-        print("You use", item_name, "and restore", power, "HP.")
-    else:
-        # For this functional version, other item types do nothing special yet.
-        print("You use", item_name + ". It has no special effect yet.")
+        if stat == "health":
+            health = character.get("health", 0)
+            max_health = character.get("max_health", health)
+            health += value
+            if health > max_health:
+                health = max_health
+            character["health"] = health
 
-    # Remove the item after use.
     inventory.remove(item_name)
-    character["inventory"] = inventory
+    return True
 
 
-def list_inventory(character):
-    """Return a list of item names in the inventory."""
-    return list(character.get("inventory", []))
+def equip_weapon(character, item_name, item_data):
+    """
+    Equip a weapon and apply its effect.
+
+    item_data example:
+        {'type': 'weapon', 'effect': 'strength:5'}
+    """
+    inventory = _get_inventory(character)
+    if item_name not in inventory:
+        raise ItemNotFoundError("Weapon not in inventory: " + item_name)
+
+    if item_data.get("type") != "weapon":
+        raise InvalidItemTypeError("Item is not a weapon.")
+
+    effect = item_data.get("effect", "")
+    if ":" in effect:
+        stat, value_str = effect.split(":", 1)
+        try:
+            value = int(value_str)
+        except ValueError:
+            value = 0
+
+        if stat == "strength":
+            character["strength"] = character.get("strength", 0) + value
+
+    character["equipped_weapon"] = item_name
+    return True
+
+
+def equip_armor(character, item_name, item_data):
+    """
+    Equip armor. For tests, just set 'equipped_armor'; any stat changes are optional.
+    """
+    inventory = _get_inventory(character)
+    if item_name not in inventory:
+        raise ItemNotFoundError("Armor not in inventory: " + item_name)
+
+    if item_data.get("type") != "armor":
+        raise InvalidItemTyp

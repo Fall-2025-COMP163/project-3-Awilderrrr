@@ -1,62 +1,32 @@
-"""Quest system for Quest Chronicles."""
-
-from custom_exceptions import QuestError
-
-
-def start_quest(character, quest_name, quests_db):
-    """Add a quest to the character's active list.
-
-    Raises:
-        QuestError if the quest does not exist or is already active.
-    """
-    if quest_name not in quests_db:
-        raise QuestError("Unknown quest: " + quest_name)
-
-    active = character.get("quests", [])
-    if quest_name in active:
-        raise QuestError("Quest already active: " + quest_name)
-
-    active.append(quest_name)
-    character["quests"] = active
-    print("Quest started:", quest_name)
+from custom_exceptions import (
+    QuestError,
+    QuestNotFoundError,
+    InsufficientLevelError,
+    QuestRequirementsNotMetError,
+    QuestAlreadyCompletedError,
+    QuestNotActiveError,
+)
 
 
-def complete_quest(character, quest_name, quests_db):
-    """Complete an active quest and grant rewards.
-
-    Raises:
-        QuestError if the quest is not active or unknown.
-    """
-    active = character.get("quests", [])
-    if quest_name not in active:
-        raise QuestError("Quest not active: " + quest_name)
-
-    if quest_name not in quests_db:
-        raise QuestError("Unknown quest: " + quest_name)
-
-    quest = quests_db[quest_name]
-    active.remove(quest_name)
-    character["quests"] = active
-
-    xp_reward = quest.get("xp", 0)
-    gold_reward = quest.get("gold", 0)
-
-    character["xp"] = character.get("xp", 0) + xp_reward
-    character["gold"] = character.get("gold", 0) + gold_reward
-
-    print("Quest completed:", quest_name)
-    print("You gain", xp_reward, "XP and", gold_reward, "gold.")
+def _ensure_quest_lists(character):
+    if "active_quests" not in character:
+        character["active_quests"] = []
+    if "completed_quests" not in character:
+        character["completed_quests"] = []
+    return character["active_quests"], character["completed_quests"]
 
 
-def list_active_quests(character, quests_db):
-    """Return descriptions of active quests."""
-    active = character.get("quests", [])
-    descriptions = []
-    for q in active:
-        if q in quests_db:
-            info = quests_db[q]
-            line = q + ": " + info.get("description", "No description.")
-        else:
-            line = q + ": (missing quest data)"
-        descriptions.append(line)
-    return descriptions
+def accept_quest(character, quest_id, quests):
+    if quest_id not in quests:
+        raise QuestNotFoundError("Quest not found: " + quest_id)
+
+    active, completed = _ensure_quest_lists(character)
+    quest = quests[quest_id]
+
+    required_level = quest.get("required_level", 1)
+    if character.get("level", 1) < required_level:
+        raise InsufficientLevelError("Level too low for quest: " + quest_id)
+
+    prereq = quest.get("prerequisite", "NONE")
+    if prereq not in ("NONE", "None", "", None) and prereq not in completed:
+        raise QuestRequirementsNotMetError("Prerequisite not met for quest: " + ques
