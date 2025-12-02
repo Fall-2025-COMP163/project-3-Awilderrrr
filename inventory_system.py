@@ -6,7 +6,7 @@ from custom_exceptions import (
     InvalidItemTypeError,
 )
 
-# make sure this constant is in the file too
+
 MAX_INVENTORY_SIZE = 20
 
 def _get_inventory(character):
@@ -16,7 +16,7 @@ def _get_inventory(character):
         character["inventory"] = inv
     return inv
 
-# ... add_item_to_inventory, remove_item_from_inventory, etc. ...
+#  add_item_to_inventory, remove_item_from_inventory, etc
 
 def purchase_item(character, item_name, item_data):
     cost = int(item_data.get("cost", 0))
@@ -30,7 +30,7 @@ def purchase_item(character, item_name, item_data):
     return True
 
 def add_item_to_inventory(character, item_name):
-    """Add an item, or raise InventoryFullError if full."""
+    # Add an item, or raise InventoryFullError if full.
     inventory = _get_inventory(character)
     if len(inventory) >= MAX_INVENTORY_SIZE:
         raise InventoryFullError("Inventory is full.")
@@ -39,7 +39,7 @@ def add_item_to_inventory(character, item_name):
 
 
 def remove_item_from_inventory(character, item_name):
-    """Remove an item, or raise ItemNotFoundError."""
+    # Remove an item, or raise ItemNotFoundError.
     inventory = _get_inventory(character)
     if item_name not in inventory:
         raise ItemNotFoundError("Item not found: " + item_name)
@@ -48,14 +48,7 @@ def remove_item_from_inventory(character, item_name):
 
 
 def use_item(character, item_name, item_data):
-    """
-    Use a consumable item.
 
-    item_data example:
-        {'type': 'consumable', 'effect': 'health:20'}
-
-    Raises InvalidItemTypeError if type != 'consumable'.
-    """
     inventory = _get_inventory(character)
     if item_name not in inventory:
         raise ItemNotFoundError("Item not found: " + item_name)
@@ -65,7 +58,7 @@ def use_item(character, item_name, item_data):
         raise InvalidItemTypeError("Only consumables can be used.")
 
     effect = item_data.get("effect", "")
-    # format: 'health:20'
+
     if ":" in effect:
         stat, value_str = effect.split(":", 1)
         try:
@@ -86,12 +79,7 @@ def use_item(character, item_name, item_data):
 
 
 def equip_weapon(character, item_name, item_data):
-    """
-    Equip a weapon and apply its effect.
-
-    item_data example:
-        {'type': 'weapon', 'effect': 'strength:5'}
-    """
+    # Equip a weapon and apply its effect.
     inventory = _get_inventory(character)
     if item_name not in inventory:
         raise ItemNotFoundError("Weapon not in inventory: " + item_name)
@@ -115,9 +103,8 @@ def equip_weapon(character, item_name, item_data):
 
 
 def equip_armor(character, item_name, item_data):
-    """
-    Equip armor. For tests, just set 'equipped_armor'; any stat changes are optional.
-    """
+
+    # Equip armor
     inventory = _get_inventory(character)
     if item_name not in inventory:
         raise ItemNotFoundError("Armor not in inventory: " + item_name)
@@ -126,18 +113,7 @@ def equip_armor(character, item_name, item_data):
         raise InvalidItemTypeError("Item is not a armor.")
 
 def sell_item(character, item_name, item_data):
-    """
-    Sell an item from inventory.
-
-    Behavior for tests:
-        - Remove item from inventory
-        - Add cost // 2 gold to character
-        - Return gold_received
-
-    In tests:
-        item_data = {'cost': 25, 'type': 'consumable'}
-        expected gold_received == 12 (25 // 2)
-    """
+    # Sell an item from inventory.
     inventory = _get_inventory(character)
     if item_name not in inventory:
         raise ItemNotFoundError("Item not in inventory: " + item_name)

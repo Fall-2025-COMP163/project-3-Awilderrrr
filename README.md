@@ -58,7 +58,4 @@ enemies, and save/load your game.
 
 ## AI Usage
 
-ChatGPT was used to help design the overall module structure, implement
-the initial versions of each module, and write this README summary.
-The code was then reviewed and may be adjusted to match the exact
-project requirements and test expectations in COMP 163.
+AI helped me understand my errors in my code. It helped me debug certain issues in my code that I didn't understand. AI also helped me with organizing my files. 

@@ -22,7 +22,7 @@ def create_enemy(enemy_type):
 
 
 def get_victory_rewards(enemy):
-    """Return rewards based on enemy info."""
+    # Return rewards based on enemy info.
     return {
         "xp": enemy.get("xp_reward", 0),
         "gold": enemy.get("gold_reward", 0),
@@ -30,13 +30,7 @@ def get_victory_rewards(enemy):
 
 
 class SimpleBattle:
-    """
-    Very simple battle wrapper for tests.
 
-    - Holds character and enemy.
-    - Has combat_active flag.
-    - player_turn and enemy_turn check combat_active.
-    """
 
     def __init__(self, character, enemy):
         self.character = character
@@ -44,14 +38,14 @@ class SimpleBattle:
         self.combat_active = True
 
     def start_battle(self):
-        """For now, just ensure combat is marked active."""
+        # just ensure combat is marked active.
         self.combat_active = True
 
     def player_turn(self):
         if not self.combat_active:
             raise CombatNotActiveError("Combat is not active.")
 
-        # Simple damage model: player uses strength if present, else 10
+        # Simple damage model player uses strength if present else 10
         damage = self.character.get("strength", 10)
         self.enemy["health"] = max(0, self.enemy.get("health", 0) - damage)
         if self.enemy["health"] <= 0:
@@ -61,7 +55,7 @@ class SimpleBattle:
         if not self.combat_active:
             raise CombatNotActiveError("Combat is not active.")
 
-        # Simple damage model: enemy deals 5 damage
+        # Simple damage model enemy deals 5 damage
         dmg = 5
         self.character["health"] = max(0, self.character.get("health", 0) - dmg)
         if self.character["health"] <= 0:

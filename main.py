@@ -8,14 +8,14 @@ from custom_exceptions import DataError, CharacterNotFoundError
 
 
 def load_game_data():
-    """Load quests and items; simple wrapper for tests."""
+    # Load quests and items simple wrapper for tests.
     quests = load_quests("data/quests.txt")
     items = load_items("data/items.txt")
     return quests, items
 
 
 def new_game():
-    """Create a new character via user input."""
+    # Create a new character via user input.
     name = input("Enter your hero's name: ").strip()
     print("Choose a class: Warrior, Mage, Rogue, Cleric")
     class_name = input("Class: ").strip()
@@ -23,24 +23,24 @@ def new_game():
 
 
 def load_game():
-    """Load an existing character by name."""
+    # Load an existing character by name.
     name = input("Enter your hero's name to load: ").strip()
     return cm_load_character(name)
 
 
 def save_game(character):
-    """Save the given character."""
+    # Save the given character.
     return cm_save_character(character)
 
 
 def game_loop(character, quests, items):
-    """Very simple loop (not tested deeply, just needs to exist)."""
+    # Very simple loop
     print("Entering game loop for:", character.get("name"))
-    # For this project, details aren't tested by automated tests.
+
 
 
 def main_menu():
-    """Main menu entry point."""
+    # Main menu entry point.
     try:
         quests, items = load_game_data()
     except DataError as e:

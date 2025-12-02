@@ -51,7 +51,7 @@ def complete_quest(character, quest_id, quests):
     if quest_id not in completed:
         completed.append(quest_id)
 
-    # Grant rewards if present
+
     xp = quest.get("reward_xp", 0)
     gold = quest.get("reward_gold", 0)
     character["experience"] = character.get("experience", 0) + xp

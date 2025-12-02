@@ -10,10 +10,10 @@ from custom_exceptions import (
 SAVE_DIR = os.path.join(os.path.dirname(__file__), "data", "save_games")
 
 def add_gold(character, amount):
-    """Add or subtract gold.
+    # Add or subtract gold.
 
-    Raises ValueError if the resulting gold would be negative.
-    """
+    #Raises ValueError if the resulting gold would be negative.
+
     gold = character.get("gold", 0) + amount
     if gold < 0:
         raise ValueError("Not enough gold.")
@@ -30,11 +30,11 @@ CLASS_STATS = {
 
 
 def create_character(name, class_name):
-    """Create and return a new character dictionary."""
+    # Create and return a new character dictionary.
     if class_name not in CLASS_STATS:
         raise InvalidCharacterClassError("Invalid class: " + class_name)
 
-    stats = CLASS_STATS[class_name]   # <— base stats clearly defined
+    stats = CLASS_STATS[class_name]
 
     return {
         "name": name,
@@ -45,7 +45,7 @@ def create_character(name, class_name):
         "max_health": stats["max_health"],
         "strength": stats["strength"],
         "magic": stats["magic"],
-        "gold": 100,                 # gives enough starting gold for shop test
+        "gold": 100,
         "inventory": [],
         "active_quests": [],
         "completed_quests": [],
@@ -59,7 +59,7 @@ def _get_save_path(name):
 
 
 def save_character(character):
-    """Save character to a file. Return True on success."""
+    # Save character to a file. Return True on success.
     name = character.get("name")
     if not name:
         raise CharacterError("Character must have a name to save.")
@@ -74,7 +74,7 @@ def save_character(character):
 
 
 def load_character(name):
-    """Load character by name; raise CharacterNotFoundError if missing."""
+    # Load character by name raise CharacterNotFoundError if missing.
     path = _get_save_path(name)
     if not os.path.exists(path):
         raise CharacterNotFoundError("No saved character named '" + name + "'")
@@ -89,7 +89,7 @@ def load_character(name):
 
 
 def delete_character(name):
-    """Delete a saved character file."""
+    # Delete a saved character file.
     path = _get_save_path(name)
     if not os.path.exists(path):
         raise CharacterNotFoundError("No saved character named '" + name + "'")
@@ -98,14 +98,14 @@ def delete_character(name):
 
 
 def gain_experience(character, amount):
-    """Add XP, level up if needed, restore full health on level up."""
+    # Add XP, level up if needed, restore full health on level up.
     if character.get("health", 0) <= 0:
         raise CharacterDeadError("Dead characters cannot gain XP.")
 
     if amount < 0:
         raise CharacterError("XP amount cannot be negative.")
 
-    # Simple rule: 100 XP per level (only first level-up is tested)
+
     xp_before = character.get("experience", 0)
     xp_after = xp_before + amount
 
@@ -120,7 +120,7 @@ def gain_experience(character, amount):
     return True
 
 def heal_character(character, amount):
-    """Heal character up to max_health."""
+    # Heal character up to max_health.
     if amount < 0:
         raise CharacterError("Heal amount cannot be negative.")
 

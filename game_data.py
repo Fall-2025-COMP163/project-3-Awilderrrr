@@ -7,27 +7,6 @@ from custom_exceptions import (
 
 
 def load_quests(path="data/quests.txt"):
-    """
-    Load quests from a block-structured quest file.
-
-    Expected format:
-
-        QUEST_ID: first_steps
-        TITLE: First Steps
-        DESCRIPTION: Begin your adventure...
-        REWARD_XP: 50
-        REWARD_GOLD: 25
-        REQUIRED_LEVEL: 1
-        PREREQUISITE: NONE
-
-        QUEST_ID: next_quest
-        ...
-
-    Behavior:
-      - Reads quests in blocks separated by blank lines
-      - Skips incomplete blocks instead of crashing
-      - Raises InvalidDataFormatError ONLY if no valid quests were found
-    """
 
     if not os.path.exists(path):
         raise MissingDataFileError("Quest file not found: " + path)
@@ -35,7 +14,7 @@ def load_quests(path="data/quests.txt"):
     quests = {}
     current = {}
 
-    # Helper: add processed quest if valid
+    # add processed quest if valid
     def commit_current(line_num):
         if not current:
             return
@@ -63,7 +42,7 @@ def load_quests(path="data/quests.txt"):
                     "prerequisite": current["PREREQUISITE"],
                 }
             except ValueError:
-                # numeric conversion failed → skip
+
                 pass
 
         # Reset for next block
@@ -80,7 +59,7 @@ def load_quests(path="data/quests.txt"):
                     continue
 
                 if ":" not in line:
-                    # Not a valid key-value line, skip
+
                     continue
 
                 key, value = line.split(":", 1)
@@ -89,7 +68,7 @@ def load_quests(path="data/quests.txt"):
 
                 current[key] = value
 
-            # End of file → commit last block
+
             commit_current(line_num)
 
     except OSError:
@@ -105,30 +84,7 @@ def load_quests(path="data/quests.txt"):
 
 
 def load_items(path="data/items.txt"):
-    """
-    Load items from a block-structured item file.
 
-    Expected format (one item per block, separated by blank lines):
-
-        ITEM_ID: health_potion
-        NAME: Health Potion
-        TYPE: consumable
-        EFFECT: health:20
-        COST: 25
-        DESCRIPTION: A basic healing potion.
-
-        ITEM_ID: iron_sword
-        NAME: Iron Sword
-        TYPE: weapon
-        EFFECT: strength:5
-        COST: 50
-        DESCRIPTION: A sturdy iron sword.
-
-    Behavior:
-      - Reads items in blocks separated by blank lines
-      - Skips incomplete/invalid blocks instead of crashing
-      - Raises InvalidDataFormatError ONLY if no valid items were found
-    """
 
     if not os.path.exists(path):
         raise MissingDataFileError("Item file not found: " + path)
@@ -137,7 +93,7 @@ def load_items(path="data/items.txt"):
     current = {}
 
     def commit_current(line_num):
-        """Validate and store current item block if valid, then reset."""
+        # Validate and store current item block if valid then reset.
         if not current:
             return
 
@@ -162,7 +118,7 @@ def load_items(path="data/items.txt"):
                     "description": current["DESCRIPTION"],
                 }
             except ValueError:
-                # bad COST value → skip this block
+                # bad COST value skip this block
                 pass
 
         current.clear()
@@ -172,14 +128,14 @@ def load_items(path="data/items.txt"):
             for line_num, raw in enumerate(f, start=1):
                 line = raw.strip()
 
-                # Blank line → end of an item block
+                # Blank line end of an item block
                 if line == "":
                     commit_current(line_num)
                     continue
 
-                # Expect KEY: VALUE lines
+
                 if ":" not in line:
-                    # Ignore malformed lines silently
+
                     continue
 
                 key, value = line.split(":", 1)
@@ -187,7 +143,7 @@ def load_items(path="data/items.txt"):
                 value = value.strip()
                 current[key] = value
 
-            # End of file: commit last block
+
             commit_current(line_num)
 
     except OSError:
@@ -200,27 +156,7 @@ def load_items(path="data/items.txt"):
 
 
 def validate_quest_data(data):
-    """
-    Validate quest data.
 
-    The tests pass a *single* quest dict, e.g.:
-
-        {
-            'quest_id': 'test',
-            'title': 'Test',
-            'description': 'Test',
-            'reward_xp': 50,
-            'reward_gold': 25,
-            'required_level': 1,
-            'prerequisite': 'NONE'
-        }
-
-    Returns:
-        True if valid.
-
-    Raises:
-        InvalidDataFormatError otherwise.
-    """
     if not isinstance(data, dict):
         raise InvalidDataFormatError("Quest data must be a dict.")
 
@@ -248,10 +184,6 @@ def validate_quest_data(data):
 
 
 def validate_item_data(data):
-    """
-    Validate item data.
-
-    The tests pass a single item dict, e.g.:
 
         {
             'item_id': 'test',
@@ -267,7 +199,7 @@ def validate_item_data(data):
 
     Raises:
         InvalidDataFormatError otherwise.
-    """
+
     if not isinstance(data, dict):
         raise InvalidDataFormatError("Item data must be a dict.")
 
