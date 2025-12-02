@@ -1,248 +1,110 @@
-"""
-COMP 163 - Project 3: Quest Chronicles
-Character Manager Module - Starter Code
+"""Character creation and management for Quest Chronicles."""
 
-Name: [Your Name Here]
+from custom_exceptions import CharacterCreationError
 
-AI Usage: [Document any AI assistance used]
+# Base stats for the four required classes.
+CLASSES = {
+    "Warrior": {
+        "hp": 120,
+        "strength": 15,
+        "magic": 3,
+    },
+    "Mage": {
+        "hp": 80,
+        "strength": 4,
+        "magic": 18,
+    },
+    "Rogue": {
+        "hp": 100,
+        "strength": 12,
+        "magic": 6,
+    },
+    "Cleric": {
+        "hp": 90,
+        "strength": 8,
+        "magic": 12,
+    },
+}
 
-This module handles character creation, loading, and saving.
-"""
 
-import os
-from custom_exceptions import (
-    InvalidCharacterClassError,
-    CharacterNotFoundError,
-    SaveFileCorruptedError,
-    InvalidSaveDataError,
-    CharacterDeadError
-)
+def create_character(name, class_name):
+    """Create a new character.
 
-# ============================================================================
-# CHARACTER MANAGEMENT FUNCTIONS
-# ============================================================================
-
-def create_character(name, character_class):
-    """
-    Create a new character with stats based on class
-    
-    Valid classes: Warrior, Mage, Rogue, Cleric
-    
-    Returns: Dictionary with character data including:
-            - name, class, level, health, max_health, strength, magic
-            - experience, gold, inventory, active_quests, completed_quests
-    
-    Raises: InvalidCharacterClassError if class is not valid
-    """
-    # TODO: Implement character creation
-    # Validate character_class first
-    # Example base stats:
-    # Warrior: health=120, strength=15, magic=5
-    # Mage: health=80, strength=8, magic=20
-    # Rogue: health=90, strength=12, magic=10
-    # Cleric: health=100, strength=10, magic=15
-    
-    # All characters start with:
-    # - level=1, experience=0, gold=100
-    # - inventory=[], active_quests=[], completed_quests=[]
-    
-    # Raise InvalidCharacterClassError if class not in valid list
-    pass
-
-def save_character(character, save_directory="data/save_games"):
-    """
-    Save character to file
-    
-    Filename format: {character_name}_save.txt
-    
-    File format:
-    NAME: character_name
-    CLASS: class_name
-    LEVEL: 1
-    HEALTH: 120
-    MAX_HEALTH: 120
-    STRENGTH: 15
-    MAGIC: 5
-    EXPERIENCE: 0
-    GOLD: 100
-    INVENTORY: item1,item2,item3
-    ACTIVE_QUESTS: quest1,quest2
-    COMPLETED_QUESTS: quest1,quest2
-    
-    Returns: True if successful
-    Raises: PermissionError, IOError (let them propagate or handle)
-    """
-    # TODO: Implement save functionality
-    # Create save_directory if it doesn't exist
-    # Handle any file I/O errors appropriately
-    # Lists should be saved as comma-separated values
-    pass
-
-def load_character(character_name, save_directory="data/save_games"):
-    """
-    Load character from save file
-    
     Args:
-        character_name: Name of character to load
-        save_directory: Directory containing save files
-    
-    Returns: Character dictionary
-    Raises: 
-        CharacterNotFoundError if save file doesn't exist
-        SaveFileCorruptedError if file exists but can't be read
-        InvalidSaveDataError if data format is wrong
-    """
-    # TODO: Implement load functionality
-    # Check if file exists → CharacterNotFoundError
-    # Try to read file → SaveFileCorruptedError
-    # Validate data format → InvalidSaveDataError
-    # Parse comma-separated lists back into Python lists
-    pass
+        name (str): Player's chosen name.
+        class_name (str): One of "Warrior", "Mage", "Rogue", "Cleric".
 
-def list_saved_characters(save_directory="data/save_games"):
-    """
-    Get list of all saved character names
-    
-    Returns: List of character names (without _save.txt extension)
-    """
-    # TODO: Implement this function
-    # Return empty list if directory doesn't exist
-    # Extract character names from filenames
-    pass
+    Returns:
+        dict representing the character.
 
-def delete_character(character_name, save_directory="data/save_games"):
+    Raises:
+        CharacterCreationError if class_name is invalid.
     """
-    Delete a character's save file
-    
-    Returns: True if deleted successfully
-    Raises: CharacterNotFoundError if character doesn't exist
-    """
-    # TODO: Implement character deletion
-    # Verify file exists before attempting deletion
-    pass
+    if class_name not in CLASSES:
+        raise CharacterCreationError("Invalid class: " + class_name)
 
-# ============================================================================
-# CHARACTER OPERATIONS
-# ============================================================================
+    base = CLASSES[class_name]
 
-def gain_experience(character, xp_amount):
-    """
-    Add experience to character and handle level ups
-    
-    Level up formula: level_up_xp = current_level * 100
-    Example when leveling up:
-    - Increase level by 1
-    - Increase max_health by 10
-    - Increase strength by 2
-    - Increase magic by 2
-    - Restore health to max_health
-    
-    Raises: CharacterDeadError if character health is 0
-    """
-    # TODO: Implement experience gain and leveling
-    # Check if character is dead first
-    # Add experience
-    # Check for level up (can level up multiple times)
-    # Update stats on level up
-    pass
+    character = {
+        "name": name,
+        "class": class_name,
+        "level": 1,
+        "hp": base["hp"],
+        "max_hp": base["hp"],
+        "strength": base["strength"],
+        "magic": base["magic"],
+        "xp": 0,
+        "gold": 0,
+        "inventory": [],
+        "quests": [],
+        # used to control some per-battle abilities, reset in combat
+        "ability_used": False,
+    }
+    return character
 
-def add_gold(character, amount):
-    """
-    Add gold to character's inventory
-    
-    Args:
-        character: Character dictionary
-        amount: Amount of gold to add (can be negative for spending)
-    
-    Returns: New gold total
-    Raises: ValueError if result would be negative
-    """
-    # TODO: Implement gold management
-    # Check that result won't be negative
-    # Update character's gold
-    pass
 
-def heal_character(character, amount):
-    """
-    Heal character by specified amount
-    
-    Health cannot exceed max_health
-    
-    Returns: Actual amount healed
-    """
-    # TODO: Implement healing
-    # Calculate actual healing (don't exceed max_health)
-    # Update character health
-    pass
+def level_up(character):
+    """Increase a character's level and stats.
 
-def is_character_dead(character):
-    """
-    Check if character's health is 0 or below
-    
-    Returns: True if dead, False if alive
-    """
-    # TODO: Implement death check
-    pass
+    Simple, slightly creative rules:
 
-def revive_character(character):
+    Warrior: more HP and strength
+    Mage:    more magic and some HP
+    Rogue:   more strength and HP
+    Cleric:  more magic and HP
     """
-    Revive a dead character with 50% health
-    
-    Returns: True if revived
-    """
-    # TODO: Implement revival
-    # Restore health to half of max_health
-    pass
+    character["level"] += 1
+    cls = character.get("class", "Warrior")
 
-# ============================================================================
-# VALIDATION
-# ============================================================================
+    if cls == "Warrior":
+        character["max_hp"] += 15
+        character["strength"] += 3
+    elif cls == "Mage":
+        character["max_hp"] += 8
+        character["magic"] += 4
+    elif cls == "Rogue":
+        character["max_hp"] += 10
+        character["strength"] += 2
+    elif cls == "Cleric":
+        character["max_hp"] += 9
+        character["magic"] += 3
+    else:
+        # Fallback, though this should not happen with valid classes.
+        character["max_hp"] += 5
 
-def validate_character_data(character):
-    """
-    Validate that character dictionary has all required fields
-    
-    Required fields: name, class, level, health, max_health, 
-                    strength, magic, experience, gold, inventory,
-                    active_quests, completed_quests
-    
-    Returns: True if valid
-    Raises: InvalidSaveDataError if missing fields or invalid types
-    """
-    # TODO: Implement validation
-    # Check all required keys exist
-    # Check that numeric values are numbers
-    # Check that lists are actually lists
-    pass
+    # Heal to full on level up.
+    character["hp"] = character["max_hp"]
 
-# ============================================================================
-# TESTING
-# ============================================================================
 
-if __name__ == "__main__":
-    print("=== CHARACTER MANAGER TEST ===")
-    
-    # Test character creation
-    # try:
-    #     char = create_character("TestHero", "Warrior")
-    #     print(f"Created: {char['name']} the {char['class']}")
-    #     print(f"Stats: HP={char['health']}, STR={char['strength']}, MAG={char['magic']}")
-    # except InvalidCharacterClassError as e:
-    #     print(f"Invalid class: {e}")
-    
-    # Test saving
-    # try:
-    #     save_character(char)
-    #     print("Character saved successfully")
-    # except Exception as e:
-    #     print(f"Save error: {e}")
-    
-    # Test loading
-    # try:
-    #     loaded = load_character("TestHero")
-    #     print(f"Loaded: {loaded['name']}")
-    # except CharacterNotFoundError:
-    #     print("Character not found")
-    # except SaveFileCorruptedError:
-    #     print("Save file corrupted")
-
+def describe_character(character):
+    """Return a multi-line string describing the character."""
+    lines = []
+    lines.append("Name: " + character.get("name", "Unknown"))
+    lines.append("Class: " + character.get("class", "Unknown"))
+    lines.append("Level: " + str(character.get("level", 1)))
+    lines.append("HP: " + str(character.get("hp", 0)) + "/" + str(character.get("max_hp", 0)))
+    lines.append("Strength: " + str(character.get("strength", 0)))
+    lines.append("Magic: " + str(character.get("magic", 0)))
+    lines.append("XP: " + str(character.get("xp", 0)))
+    lines.append("Gold: " + str(character.get("gold", 0)))
+    return "\n".join(lines)

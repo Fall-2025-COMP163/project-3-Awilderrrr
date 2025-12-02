@@ -1,164 +1,210 @@
-"""
-COMP 163 - Project 3: Quest Chronicles
-Game Data Module - Starter Code
+"""Game data loading and saving for Quest Chronicles.
 
-Name: [Your Name Here]
-
-AI Usage: [Document any AI assistance used]
-
-This module handles loading and validating game data from text files.
+Only standard Python concepts are used: files, strings, lists, dicts,
+functions, and exceptions.
 """
 
 import os
-from custom_exceptions import (
-    InvalidDataFormatError,
-    MissingDataFileError,
-    CorruptedDataError
-)
+from custom_exceptions import GameDataError
 
-# ============================================================================
-# DATA LOADING FUNCTIONS
-# ============================================================================
+DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+ITEMS_FILE = os.path.join(DATA_DIR, "items.txt")
+QUESTS_FILE = os.path.join(DATA_DIR, "quests.txt")
+SAVES_DIR = os.path.join(DATA_DIR, "save_games")
 
-def load_quests(filename="data/quests.txt"):
-    """
-    Load quest data from file
-    
-    Expected format per quest (separated by blank lines):
-    QUEST_ID: unique_quest_name
-    TITLE: Quest Display Title
-    DESCRIPTION: Quest description text
-    REWARD_XP: 100
-    REWARD_GOLD: 50
-    REQUIRED_LEVEL: 1
-    PREREQUISITE: previous_quest_id (or NONE)
-    
-    Returns: Dictionary of quests {quest_id: quest_data_dict}
-    Raises: MissingDataFileError, InvalidDataFormatError, CorruptedDataError
-    """
-    # TODO: Implement this function
-    # Must handle:
-    # - FileNotFoundError → raise MissingDataFileError
-    # - Invalid format → raise InvalidDataFormatError
-    # - Corrupted/unreadable data → raise CorruptedDataError
-    pass
 
-def load_items(filename="data/items.txt"):
-    """
-    Load item data from file
-    
-    Expected format per item (separated by blank lines):
-    ITEM_ID: unique_item_name
-    NAME: Item Display Name
-    TYPE: weapon|armor|consumable
-    EFFECT: stat_name:value (e.g., strength:5 or health:20)
-    COST: 100
-    DESCRIPTION: Item description
-    
-    Returns: Dictionary of items {item_id: item_data_dict}
-    Raises: MissingDataFileError, InvalidDataFormatError, CorruptedDataError
-    """
-    # TODO: Implement this function
-    # Must handle same exceptions as load_quests
-    pass
+def load_items(file_path=ITEMS_FILE):
+    """Load item data from a text file.
 
-def validate_quest_data(quest_dict):
-    """
-    Validate that quest dictionary has all required fields
-    
-    Required fields: quest_id, title, description, reward_xp, 
-                    reward_gold, required_level, prerequisite
-    
-    Returns: True if valid
-    Raises: InvalidDataFormatError if missing required fields
-    """
-    # TODO: Implement validation
-    # Check that all required keys exist
-    # Check that numeric values are actually numbers
-    pass
+    Expected format per non-empty, non-comment line:
+        name,type,power,value
 
-def validate_item_data(item_dict):
-    """
-    Validate that item dictionary has all required fields
-    
-    Required fields: item_id, name, type, effect, cost, description
-    Valid types: weapon, armor, consumable
-    
-    Returns: True if valid
-    Raises: InvalidDataFormatError if missing required fields or invalid type
-    """
-    # TODO: Implement validation
-    pass
+    Example:
+        healing_potion,heal,25,10
 
-def create_default_data_files():
+    Returns:
+        dict mapping item_name -> info_dict
     """
-    Create default data files if they don't exist
-    This helps with initial setup and testing
+    items = {}
+
+    try:
+        with open(file_path, "r") as f:
+            for line_num, line in enumerate(f, start=1):
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+
+                parts = line.split(",")
+                if len(parts) != 4:
+                    raise GameDataError("Invalid item format on line " + str(line_num))
+
+                name, item_type, power_str, value_str = parts
+
+                try:
+                    power = int(power_str)
+                    value = int(value_str)
+                except ValueError:
+                    raise GameDataError("Non-numeric item data on line " + str(line_num))
+
+                items[name] = {
+                    "type": item_type,
+                    "power": power,
+                    "value": value
+                }
+    except FileNotFoundError:
+        raise GameDataError("Items file not found at " + file_path)
+
+    return items
+
+
+def load_quests(file_path=QUESTS_FILE):
+    """Load quest data from a text file.
+
+    Expected format per non-empty, non-comment line:
+        name|description|xp|gold
+
+    Example:
+        Goblin Hunt|Clear out goblins near the village|50|20
+
+    Returns:
+        dict mapping quest_name -> info_dict
     """
-    # TODO: Implement this function
-    # Create data/ directory if it doesn't exist
-    # Create default quests.txt and items.txt files
-    # Handle any file permission errors appropriately
-    pass
+    quests = {}
 
-# ============================================================================
-# HELPER FUNCTIONS
-# ============================================================================
+    try:
+        with open(file_path, "r") as f:
+            for line_num, line in enumerate(f, start=1):
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
 
-def parse_quest_block(lines):
+                parts = line.split("|")
+                if len(parts) != 4:
+                    raise GameDataError("Invalid quest format on line " + str(line_num))
+
+                name, description, xp_str, gold_str = parts
+
+                try:
+                    xp = int(xp_str)
+                    gold = int(gold_str)
+                except ValueError:
+                    raise GameDataError("Non-numeric quest data on line " + str(line_num))
+
+                quests[name] = {
+                    "description": description,
+                    "xp": xp,
+                    "gold": gold
+                }
+    except FileNotFoundError:
+        raise GameDataError("Quests file not found at " + file_path)
+
+    return quests
+
+
+def save_game(player_name, character):
+    """Save character data to a file based on the player name.
+
+    This uses a simple text format so it stays within the course topics.
+    The file stores one line with pipe-separated fields and comma-separated
+    lists for inventory and quests.
     """
-    Parse a block of lines into a quest dictionary
-    
-    Args:
-        lines: List of strings representing one quest
-    
-    Returns: Dictionary with quest data
-    Raises: InvalidDataFormatError if parsing fails
+    if not os.path.isdir(SAVES_DIR):
+        os.makedirs(SAVES_DIR, exist_ok=True)
+
+    file_path = os.path.join(SAVES_DIR, player_name + ".txt")
+
+    # Safely pull values from the dict, with defaults
+    name = character.get("name", player_name)
+    class_name = character.get("class", "Warrior")
+    level = int(character.get("level", 1))
+    hp = int(character.get("hp", 0))
+    max_hp = int(character.get("max_hp", 0))
+    strength = int(character.get("strength", 0))
+    magic = int(character.get("magic", 0))
+    xp = int(character.get("xp", 0))
+    gold = int(character.get("gold", 0))
+    inventory = character.get("inventory", [])
+    quests = character.get("quests", [])
+
+    inventory_str = ",".join(inventory)
+    quests_str = ",".join(quests)
+
+    line = "|".join([
+        name,
+        class_name,
+        str(level),
+        str(hp),
+        str(max_hp),
+        str(strength),
+        str(magic),
+        str(xp),
+        str(gold),
+        inventory_str,
+        quests_str,
+    ])
+
+    try:
+        with open(file_path, "w") as f:
+            f.write(line + "\n")
+    except OSError:
+        raise GameDataError("Failed to save game data.")
+
+
+def load_game(player_name):
+    """Load character data from a save file.
+
+    Returns:
+        character dict
+
+    Raises:
+        GameDataError if file does not exist or data is invalid.
     """
-    # TODO: Implement parsing logic
-    # Split each line on ": " to get key-value pairs
-    # Convert numeric strings to integers
-    # Handle parsing errors gracefully
-    pass
+    file_path = os.path.join(SAVES_DIR, player_name + ".txt")
 
-def parse_item_block(lines):
-    """
-    Parse a block of lines into an item dictionary
-    
-    Args:
-        lines: List of strings representing one item
-    
-    Returns: Dictionary with item data
-    Raises: InvalidDataFormatError if parsing fails
-    """
-    # TODO: Implement parsing logic
-    pass
+    if not os.path.exists(file_path):
+        raise GameDataError("No save file found for player '" + player_name + "'")
 
-# ============================================================================
-# TESTING
-# ============================================================================
+    try:
+        with open(file_path, "r") as f:
+            line = f.readline().strip()
+    except OSError:
+        raise GameDataError("Failed to read save file for '" + player_name + "'")
 
-if __name__ == "__main__":
-    print("=== GAME DATA MODULE TEST ===")
-    
-    # Test creating default files
-    # create_default_data_files()
-    
-    # Test loading quests
-    # try:
-    #     quests = load_quests()
-    #     print(f"Loaded {len(quests)} quests")
-    # except MissingDataFileError:
-    #     print("Quest file not found")
-    # except InvalidDataFormatError as e:
-    #     print(f"Invalid quest format: {e}")
-    
-    # Test loading items
-    # try:
-    #     items = load_items()
-    #     print(f"Loaded {len(items)} items")
-    # except MissingDataFileError:
-    #     print("Item file not found")
-    # except InvalidDataFormatError as e:
-    #     print(f"Invalid item format: {e}")
+    parts = line.split("|")
+    if len(parts) != 11:
+        raise GameDataError("Invalid save data format for '" + player_name + "'")
 
+    (name, class_name, level_str, hp_str, max_hp_str,
+     strength_str, magic_str, xp_str, gold_str,
+     inventory_str, quests_str) = parts
+
+    try:
+        level = int(level_str)
+        hp = int(hp_str)
+        max_hp = int(max_hp_str)
+        strength = int(strength_str)
+        magic = int(magic_str)
+        xp = int(xp_str)
+        gold = int(gold_str)
+    except ValueError:
+        raise GameDataError("Non-numeric save data for '" + player_name + "'")
+
+    inventory = inventory_str.split(",") if inventory_str else []
+    quests = quests_str.split(",") if quests_str else []
+
+    character = {
+        "name": name,
+        "class": class_name,
+        "level": level,
+        "hp": hp,
+        "max_hp": max_hp,
+        "strength": strength,
+        "magic": magic,
+        "xp": xp,
+        "gold": gold,
+        "inventory": inventory,
+        "quests": quests,
+        "ability_used": False,
+    }
+
+    return character
