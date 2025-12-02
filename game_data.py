@@ -184,7 +184,7 @@ def validate_quest_data(data):
 
 
 def validate_item_data(data):
-
+#
     if not isinstance(data, dict):
         raise InvalidDataFormatError("Item data must be a dict.")
 
