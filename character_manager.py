@@ -9,6 +9,17 @@ from custom_exceptions import (
 
 SAVE_DIR = os.path.join(os.path.dirname(__file__), "data", "save_games")
 
+def add_gold(character, amount):
+    """Add or subtract gold.
+
+    Raises ValueError if the resulting gold would be negative.
+    """
+    gold = character.get("gold", 0) + amount
+    if gold < 0:
+        raise ValueError("Not enough gold.")
+    character["gold"] = gold
+
+
 # Base stats for required classes
 CLASS_STATS = {
     "Warrior": {"max_health": 120, "strength": 15, "magic": 3},

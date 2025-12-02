@@ -6,8 +6,8 @@ from custom_exceptions import (
     InvalidItemTypeError,
 )
 
+# make sure this constant is in the file too
 MAX_INVENTORY_SIZE = 20
-
 
 def _get_inventory(character):
     inv = character.get("inventory")
@@ -16,6 +16,23 @@ def _get_inventory(character):
         character["inventory"] = inv
     return inv
 
+# ... add_item_to_inventory, remove_item_from_inventory, etc. ...
+
+def purchase_item(character, item_name, item_data):
+    """
+    Purchase an item.
+
+    item_data example from tests:
+        {'cost': 25, 'type': 'consumable'}
+    """
+    cost = int(item_data.get("cost", 0))
+    gold = character.get("gold", 0)
+    if gold < cost:
+        raise InsufficientResourcesError("Not enough gold to purchase item.")
+
+    character["gold"] = gold - cost
+    add_item_to_inventory(character, item_name)
+    return True
 
 def add_item_to_inventory(character, item_name):
     """Add an item, or raise InventoryFullError if full."""
