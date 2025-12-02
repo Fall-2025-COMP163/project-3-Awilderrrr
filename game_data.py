@@ -68,7 +68,7 @@ def load_quests(path="data/quests.txt"):
 
                 current[key] = value
 
-
+            #
             commit_current(line_num)
 
     except OSError:
@@ -184,21 +184,6 @@ def validate_quest_data(data):
 
 
 def validate_item_data(data):
-
-        {
-            'item_id': 'test',
-            'name': 'Test',
-            'type': 'consumable',
-            'effect': 'health:20',
-            'cost': 25,
-            'description': 'Test'
-        }
-
-    Returns:
-        True if valid.
-
-    Raises:
-        InvalidDataFormatError otherwise.
 
     if not isinstance(data, dict):
         raise InvalidDataFormatError("Item data must be a dict.")
