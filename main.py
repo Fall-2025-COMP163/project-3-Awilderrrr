@@ -1,4 +1,4 @@
-"""Main entry point and menu system for Quest Chronicles."""
+"""Main entry point and menu system for Quest Chronicles.."""
 
 from character_manager import create_character, describe_character, level_up
 from game_data import load_items, load_quests, save_game, load_game
